@@ -1,0 +1,15 @@
+# Virtual Environments
+**/.venv/
+
+# Python compiler and cache files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Environment secrets & Configurations
+**/.env
+**/*.toml
+#!/pyproject.toml

@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: nse_analytics_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nse_analytics
+      POSTGRES_USER: nse_user
+      POSTGRES_PASSWORD: nse_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
