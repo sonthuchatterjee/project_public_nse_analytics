@@ -1,0 +1,15 @@
+[etl.bhavcopy]
+base_url = "https://archives.nseindia.com/products/content"
+file_pattern = "sec_bhavdata_full_{dd}{mm}{yyyy}.csv"
+
+# Full load window (can edit anytime)
+full_load_start = "2026-05-01"
+full_load_end   = "2026-05-10"
+
+# Incremental behavior
+incremental_max_lag_days = 5
+
+# Network & retry
+request_timeout_secs = 30
+max_retries = 3
+retry_backoff_secs = 5

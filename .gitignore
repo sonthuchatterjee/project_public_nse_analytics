@@ -12,4 +12,5 @@
 # Environment secrets & Configurations
 **/.env
 **/*.toml
-#!/pyproject.toml
+!/config.toml
+!/.env
