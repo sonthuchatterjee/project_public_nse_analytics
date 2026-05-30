@@ -75,14 +75,40 @@ class LoadRecon(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     load_date = Column(Date, nullable=False)
-    source = Column(String(32), nullable=False)      # 'NSE_EOD', 'INTRADAY', etc.
+    source = Column(String(32), nullable=False)  # 'NSE_EOD', 'INTRADAY', etc.
+    run_mode = Column(String(16), nullable=False)  # 'FULL', 'INCREMENTAL', 'ADHOC'
+
     file_name = Column(String(256))
-    status = Column(String(16), nullable=False)      # 'SUCCESS', 'FAILED', 'PARTIAL'
+    file_hash = Column(String(128))
+    date_inside_file = Column(Date)
+
     expected_rows = Column(BigInteger)
     loaded_rows = Column(BigInteger)
-    checksum = Column(String(128))
+
+    status = Column(String(48), nullable=False)
+    date_match_status = Column(String(24))
+    hash_match_status = Column(String(32))
+
+    matched_load_date = Column(Date)
+    matched_file_name = Column(String(256))
+
     error_message = Column(String(512))
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+class BhavcopyReloadAudit(Base):
+    __tablename__ = "bhavcopy_reload_audit"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    source = Column(String(32), nullable=False)
+    load_date = Column(Date, nullable=False)
+    run_mode = Column(String(16), nullable=False)
+
+    file_name = Column(String(256))
+    file_hash = Column(String(128), nullable=False)
+    date_inside_file = Column(Date)
+
+    reload_status = Column(String(48), nullable=False)
+    entered_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 class BhavEodRaw(Base):
     """

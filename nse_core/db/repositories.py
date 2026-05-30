@@ -2,10 +2,10 @@ from datetime import date, datetime
 from typing import List, Optional
 
 import polars as pl
-from sqlalchemy import and_, select, func
+from sqlalchemy import and_, select, func, text
 from sqlalchemy.orm import Session
 
-from .models import Symbol, OhlcDaily, BhavEodRaw, LoadRecon
+from .models import Symbol, OhlcDaily, BhavEodRaw, LoadRecon, BhavcopyReloadAudit
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 
@@ -198,26 +198,104 @@ def create_load_recon(
     session: Session,
     load_date: date,
     source: str,
+    run_mode: str,
     file_name: Optional[str],
+    file_hash: Optional[str],
+    date_inside_file: Optional[date],
     expected_rows: int,
     loaded_rows: int,
     status: str,
+    date_match_status: Optional[str] = None,
+    hash_match_status: Optional[str] = None,
+    matched_load_date: Optional[date] = None,
+    matched_file_name: Optional[str] = None,
     error_message: Optional[str] = None,
-    checksum: Optional[str] = None,
 ) -> LoadRecon:
     obj = LoadRecon(
         load_date=load_date,
         source=source,
+        run_mode=run_mode,
         file_name=file_name,
-        status=status,
+        file_hash=file_hash,
+        date_inside_file=date_inside_file,
         expected_rows=expected_rows,
         loaded_rows=loaded_rows,
-        checksum=checksum,
+        status=status,
+        date_match_status=date_match_status,
+        hash_match_status=hash_match_status,
+        matched_load_date=matched_load_date,
+        matched_file_name=matched_file_name,
         error_message=error_message,
         created_at=datetime.utcnow(),
     )
     session.add(obj)
     return obj
+
+def get_prior_success_recons_for_date(
+    session: Session,
+    source: str,
+    load_date: date,
+) -> List[LoadRecon]:
+    stmt = (
+        select(LoadRecon)
+        .where(LoadRecon.source == source)
+        .where(LoadRecon.load_date == load_date)
+        .where(
+            LoadRecon.status.in_(
+                ["SUCCESS", "RELOADED_SUCCESS", "DATE_MISMATCH_RELOADED_SUCCESS"]
+            )
+        )
+        .order_by(LoadRecon.created_at.desc())
+    )
+    return list(session.execute(stmt).scalars().all())
+
+
+def get_prior_success_recons_all_dates(
+    session: Session,
+    source: str,
+) -> List[LoadRecon]:
+    stmt = (
+        select(LoadRecon)
+        .where(LoadRecon.source == source)
+        .where(
+            LoadRecon.status.in_(
+                ["SUCCESS", "RELOADED_SUCCESS", "DATE_MISMATCH_RELOADED_SUCCESS"]
+            )
+        )
+        .order_by(LoadRecon.created_at.desc())
+    )
+    return list(session.execute(stmt).scalars().all())
+
+
+def create_bhavcopy_reload_audit(
+    session: Session,
+    source: str,
+    load_date: date,
+    run_mode: str,
+    file_name: Optional[str],
+    file_hash: str,
+    date_inside_file: Optional[date],
+    reload_status: str,
+) -> BhavcopyReloadAudit:
+    obj = BhavcopyReloadAudit(
+        source=source,
+        load_date=load_date,
+        run_mode=run_mode,
+        file_name=file_name,
+        file_hash=file_hash,
+        date_inside_file=date_inside_file,
+        reload_status=reload_status,
+        entered_at=datetime.utcnow(),
+    )
+    session.add(obj)
+    return obj
+
+
+def truncate_bhavcopy_tables(session: Session) -> None:
+    session.execute(text("TRUNCATE TABLE bhav_eod_raw RESTART IDENTITY CASCADE"))
+    session.execute(text("TRUNCATE TABLE load_recon RESTART IDENTITY CASCADE"))
+    session.execute(text("TRUNCATE TABLE bhavcopy_reload_audit RESTART IDENTITY CASCADE"))
+    session.execute(text("TRUNCATE TABLE symbols RESTART IDENTITY CASCADE"))
 
 def get_max_bhav_date(session: Session) -> Optional[date]:
     stmt = select(func.max(BhavEodRaw.date1))

@@ -8,6 +8,12 @@ full_load_end   = "2026-05-10"
 
 # Incremental behavior
 incremental_max_lag_days = 5
+use_incremental_end_date = false
+incremental_end_date = "2026-05-15"
+
+# Adhoc behavior
+adhoc_excel_path = "input/adhoc_load_dates.xlsx"
+adhoc_excel_sheet_name = "Sheet1"
 
 # Network & retry
 request_timeout_secs = 30

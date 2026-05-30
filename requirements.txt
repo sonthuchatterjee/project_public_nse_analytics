@@ -9,3 +9,5 @@ polars
 pydantic-settings
 streamlit==1.35.0
 httpx==0.27.0
+openpyxl
+fastexcel
